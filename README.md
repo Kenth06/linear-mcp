@@ -1,5 +1,7 @@
 ## Linear MCP on Cloudflare Workers
 
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Kenth06/linear-mcp)
+
 Remote MCP server to manage Linear via HTTP, deployed on Cloudflare Workers. Built with TypeScript, Hono, and the MCP SDK.
 
 ### Features
