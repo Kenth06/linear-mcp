@@ -108,6 +108,10 @@ curl -s -X POST https://<your-worker>.workers.dev/mcp \
 
 ### Claude Desktop integration
 
+<img width="1152" height="896" alt="MCP-IMAGE" src="https://github.com/user-attachments/assets/f0da67a4-795e-4c73-86c7-ae563d50000f" />
+
+
+
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
