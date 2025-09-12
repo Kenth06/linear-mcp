@@ -1,25 +1,27 @@
 {
-	"name": "remote-mcp-server-authless",
-	"version": "0.0.0",
+	"name": "linear-mcp",
+	"version": "1.0.0",
+	"type": "module",
 	"private": true,
 	"scripts": {
-		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"types": "tsc --noEmit",
+		"cf-typegen": "wrangler types",
 		"format": "biome format --write",
 		"lint:fix": "biome lint --fix",
-		"start": "wrangler dev",
-		"cf-typegen": "wrangler types",
-		"type-check": "tsc --noEmit"
+		"start": "wrangler dev"
 	},
 	"dependencies": {
-		"@modelcontextprotocol/sdk": "1.17.5",
+		"hono": "^4.6.10",
+		"@modelcontextprotocol/sdk": "^1.17.5",
 		"agents": "^0.1.2",
-		"zod": "^3.25.76"
+		"zod": "^3.23.8"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.2.4",
 		"@types/node": "^24.3.1",
-		"typescript": "5.9.2",
+		"typescript": "^5.9.2",
 		"wrangler": "^4.36.0"
 	}
 }

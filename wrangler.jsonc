@@ -8,28 +8,14 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "liner-mcp",
+	"name": "linear-mcp",
 	"main": "src/index.ts",
-	"compatibility_date": "2025-03-10",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"migrations": [
-		{
-			"new_sqlite_classes": [
-				"MyMCP"
-			],
-			"tag": "v1"
-		}
-	],
+	"compatibility_date": "2025-09-12",
+	"compatibility_flags": ["nodejs_compat"],
 	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "MyMCP",
-				"name": "MCP_OBJECT"
-			}
-		]
+		"bindings": [{ "name": "MCP_OBJECT", "class_name": "LinearMCP" }]
 	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["LinearMCP"] }],
 	"observability": {
 		"enabled": true
 	}
