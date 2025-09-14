@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { linearFetch, GQL } from "./linear";
+import { linearFetch, GQL, resolveIssueId } from "./linear";
 
 export default function register(server: McpServer, env: Env) {
 	server.tool(
@@ -10,8 +10,9 @@ export default function register(server: McpServer, env: Env) {
 			body: z.string(),
 		},
 		async (input) => {
+			const issueId = await resolveIssueId(env, input.issueIdOrKey);
 			const r = await linearFetch(env, GQL.commentCreate, {
-				input: { issueId: input.issueIdOrKey, body: input.body },
+				input: { issueId, body: input.body },
 			});
 			return { content: [{ type: "text", text: `Comentario ${r.commentCreate?.comment?.id ?? "ok"}` }] };
 		},
