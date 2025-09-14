@@ -17,6 +17,8 @@ Remote MCP server to manage Linear via HTTP, deployed on Cloudflare Workers. Bui
   - `linearListIssues`: filter by team, assignee, and date ranges
   - `linearListIssuesToday`: issues updated today
   - `linearGetIssue`: detailed issue view by id/key
+  - `linearListTeams`: list team keys and names
+  - `linearListStates`: list workflow states for a team
 
 ### Requirements
 
