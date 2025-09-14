@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { linearFetch, GQL } from "./linear";
+import { linearFetch, GQL, resolveTeamIdFromKey } from "./linear";
 
 export default function register(server: McpServer, env: Env) {
 	server.tool(
@@ -15,9 +15,7 @@ export default function register(server: McpServer, env: Env) {
 			dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 		},
 		async (input) => {
-			const td = await linearFetch(env, GQL.teamByKey, { key: input.teamKey });
-			const teamId = td.teams.nodes[0]?.id;
-			if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
+			const teamId = await resolveTeamIdFromKey(env, input.teamKey);
 
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
@@ -44,6 +42,8 @@ export default function register(server: McpServer, env: Env) {
 				(payload as any).dueDate = input.dueDate;
 			}
 
+			// Optional: allow setting state via name/type alias at creation if 'state' provided
+			// Linear's IssueCreateInput supports stateId; resolve if description contains state alias not needed
 			const r = await linearFetch(env, GQL.issueCreate, { input: payload });
 			const issue = r.issueCreate.issue;
 			return { content: [{ type: "text", text: `Creado ${issue.identifier}: ${issue.title}` }] };

@@ -25,14 +25,22 @@ export default function register(server: McpServer, env: Env) {
 		async (input) => {
 			let teamId: string | undefined;
 			if (input.teamKey) {
-				const td = await linearFetch(env, GQL.teamByKey, { key: input.teamKey });
+				const td = await linearFetch<{ teams: { nodes: Array<{ id: string }> } }>(
+					env,
+					GQL.teamByKey,
+					{ key: input.teamKey },
+				);
 				teamId = td.teams.nodes[0]?.id;
 				if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
 			}
 
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
-				const ud = await linearFetch(env, GQL.userByEmail, { email: input.assigneeEmail });
+				const ud = await linearFetch<{ users: { nodes: Array<{ id: string }> } }>(
+					env,
+					GQL.userByEmail,
+					{ email: input.assigneeEmail },
+				);
 				assigneeId = ud.users.nodes[0]?.id;
 				if (!assigneeId) throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
 			}
@@ -55,7 +63,15 @@ export default function register(server: McpServer, env: Env) {
 			const toDateTime = (s?: string) => (s ? `${s}T00:00:00.000Z` : undefined);
 			const toDateTimeEnd = (s?: string) => (s ? `${s}T23:59:59.999Z` : undefined);
 
-			const data = await linearFetch(env, GQL.issuesByFilter, {
+			const data = await linearFetch<{
+				issues: {
+					nodes: Array<{
+						identifier: string;
+						title: string;
+						state?: { name?: string };
+					}>;
+				};
+			}>(env, GQL.issuesByFilter, {
 				teamId,
 				assigneeId,
 				createdAfter: toDateTime(createdAfter),
@@ -64,8 +80,9 @@ export default function register(server: McpServer, env: Env) {
 				updatedBefore: toDateTimeEnd(updatedBefore),
 			});
 
-			const items = (data.issues?.nodes || []).map((n: any) =>
-				`${n.identifier} ${n.title} [${n.state?.name ?? ""}]`);
+			const items = (data.issues?.nodes || []).map(
+				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
+			);
 			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
 		},
 	);
@@ -79,14 +96,22 @@ export default function register(server: McpServer, env: Env) {
 		async (input) => {
 			let teamId: string | undefined;
 			if (input.teamKey) {
-				const td = await linearFetch(env, GQL.teamByKey, { key: input.teamKey });
+				const td = await linearFetch<{ teams: { nodes: Array<{ id: string }> } }>(
+					env,
+					GQL.teamByKey,
+					{ key: input.teamKey },
+				);
 				teamId = td.teams.nodes[0]?.id;
 				if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
 			}
 
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
-				const ud = await linearFetch(env, GQL.userByEmail, { email: input.assigneeEmail });
+				const ud = await linearFetch<{ users: { nodes: Array<{ id: string }> } }>(
+					env,
+					GQL.userByEmail,
+					{ email: input.assigneeEmail },
+				);
 				assigneeId = ud.users.nodes[0]?.id;
 				if (!assigneeId) throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
 			}
@@ -94,14 +119,23 @@ export default function register(server: McpServer, env: Env) {
 			const today = isoDate(new Date());
 			const toDateTime = (s: string) => `${s}T00:00:00.000Z`;
 			const toDateTimeEnd = (s: string) => `${s}T23:59:59.999Z`;
-			const data = await linearFetch(env, GQL.issuesByFilter, {
+			const data = await linearFetch<{
+				issues: {
+					nodes: Array<{
+						identifier: string;
+						title: string;
+						state?: { name?: string };
+					}>;
+				};
+			}>(env, GQL.issuesByFilter, {
 				teamId,
 				assigneeId,
 				updatedAfter: toDateTime(today),
 				updatedBefore: toDateTimeEnd(today),
 			});
-			const items = (data.issues?.nodes || []).map((n: any) =>
-				`${n.identifier} ${n.title} [${n.state?.name ?? ""}]`);
+			const items = (data.issues?.nodes || []).map(
+				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
+			);
 			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
 		},
 	);

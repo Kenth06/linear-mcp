@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { linearFetch, GQL } from "./linear";
+import { linearFetch, GQL, resolveIssueId } from "./linear";
 
 function isUuidLike(value: string): boolean {
 	// Loose check for UUID v4-like strings
@@ -20,6 +20,7 @@ export default function register(server: McpServer, env: Env) {
 			dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 		},
 		async (input) => {
+			const issueId = await resolveIssueId(env, input.idOrKey);
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
 				const ud = await linearFetch(env, GQL.userByEmail, { email: input.assigneeEmail });
@@ -39,7 +40,7 @@ export default function register(server: McpServer, env: Env) {
 			if (input.stateId && isUuidLike(input.stateId)) update.stateId = input.stateId;
 
 			if (!update.stateId && desiredAlias) {
-				const issueData = await linearFetch(env, GQL.issueByIdOrKey, { id: input.idOrKey });
+				const issueData = await linearFetch(env, GQL.issueById, { id: issueId });
 				const teamId: string | undefined = issueData.issue?.team?.id;
 				if (!teamId) throw new Error("No se pudo determinar el team del issue");
 				const statesData = await linearFetch(env, GQL.teamWorkflowStates, { teamId });
@@ -52,7 +53,10 @@ export default function register(server: McpServer, env: Env) {
 				update.stateId = stateId;
 			}
 
-			const r = await linearFetch(env, GQL.issueUpdate, { id: input.idOrKey, input: update });
+			const r = await linearFetch(env, GQL.issueUpdate, {
+				id: issueId,
+				input: update,
+			});
 			const issue = r.issueUpdate.issue;
 			return { content: [{ type: "text", text: `Actualizado ${issue.identifier}: ${issue.title}` }] };
 		},

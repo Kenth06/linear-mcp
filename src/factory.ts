@@ -6,6 +6,8 @@ import registerDelete from "./tools/linearDeleteIssue";
 import registerWebhooks from "./tools/linearWebhooks";
 import registerListIssues from "./tools/linearListIssues";
 import registerGetIssue from "./tools/linearGetIssue";
+import registerListTeams from "./tools/linearListTeams";
+import registerListStates from "./tools/linearListStates";
 
 export function registerTools(server: McpServer, env: Env): void {
 	registerCreate(server, env);
@@ -15,6 +17,8 @@ export function registerTools(server: McpServer, env: Env): void {
 	registerWebhooks(server, env);
 	registerListIssues(server, env);
 	registerGetIssue(server, env);
+	registerListTeams(server, env);
+	registerListStates(server, env);
 }
 
 
