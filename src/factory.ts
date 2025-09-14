@@ -8,6 +8,8 @@ import registerListIssues from "./tools/linearListIssues";
 import registerGetIssue from "./tools/linearGetIssue";
 import registerListTeams from "./tools/linearListTeams";
 import registerListStates from "./tools/linearListStates";
+import registerListLabels from "./tools/linearListLabels";
+import registerListUsers from "./tools/linearListUsers";
 
 export function registerTools(server: McpServer, env: Env): void {
 	registerCreate(server, env);
@@ -19,6 +21,8 @@ export function registerTools(server: McpServer, env: Env): void {
 	registerGetIssue(server, env);
 	registerListTeams(server, env);
 	registerListStates(server, env);
+	registerListLabels(server, env);
+	registerListUsers(server, env);
 }
 
 

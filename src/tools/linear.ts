@@ -48,10 +48,38 @@ export const GQL = {
 					updatedAt: { gte: $updatedAfter, lte: $updatedBefore }
 					createdAt: { gte: $createdAfter, lte: $createdBefore }
 				}
-			) { nodes { id identifier title state { id name } assignee { id name } createdAt updatedAt } }
+			) {
+				nodes {
+					id
+					identifier
+					title
+					state { id name }
+					assignee { id name }
+					priority
+					project { id name }
+					labels { nodes { id name } }
+					createdAt
+					updatedAt
+				}
+			}
 		}`,
 	issueByIdentifier: `
-		query ($id: String!) { issue(id: $id) { id identifier title description state { id name } assignee { id name email } team { id key name } createdAt updatedAt } }`,
+		query ($id: String!) {
+			issue(id: $id) {
+				id
+				identifier
+				title
+				description
+				state { id name }
+				assignee { id name email }
+				team { id key name }
+				priority
+				project { id name }
+				labels { nodes { id name } }
+				createdAt
+				updatedAt
+			}
+		}`,
 	issueCreate: `
 		mutation ($input: IssueCreateInput!) {
 			issueCreate(input: $input) { success issue { id identifier title } }
@@ -70,6 +98,14 @@ export const GQL = {
 	webhookDelete: `mutation ($id: String!) { webhookDelete(id: $id) { success } }`,
 	teamIdByKey: `query ($key: String!) { teams(filter: { key: { eq: $key } }) { nodes { id } } }`,
 	teamsList: `query { teams(first: 50) { nodes { id key name } } }`,
+	issueLabelsByTeam: `
+		query ($teamId: ID) {
+			issueLabels(filter: { team: { id: { eq: $teamId } } }) { nodes { id name } }
+		}`,
+	usersList: `
+		query {
+			users { nodes { id name email } }
+		}`,
 };
 
 export function isUuidLike(value: string): boolean {

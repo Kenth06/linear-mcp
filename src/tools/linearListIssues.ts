@@ -81,7 +81,17 @@ export default function register(server: McpServer, env: Env) {
 			});
 
 			const items = (data.issues?.nodes || []).map(
-				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
+				(n: {
+					identifier: string;
+					title: string;
+					state?: { name?: string };
+					priority?: number;
+					project?: { name?: string };
+					labels?: { nodes?: Array<{ id: string; name: string }> };
+				}) => {
+					const labels = (n.labels?.nodes || []).map((l) => l.name).join(", ");
+					return `${n.identifier} ${n.title} [${n.state?.name ?? ""}] P:${n.priority ?? ""} Proy:${n.project?.name ?? ""} Labels:${labels}`;
+				},
 			);
 			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
 		},
@@ -134,7 +144,17 @@ export default function register(server: McpServer, env: Env) {
 				updatedBefore: toDateTimeEnd(today),
 			});
 			const items = (data.issues?.nodes || []).map(
-				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
+				(n: {
+					identifier: string;
+					title: string;
+					state?: { name?: string };
+					priority?: number;
+					project?: { name?: string };
+					labels?: { nodes?: Array<{ id: string; name: string }> };
+				}) => {
+					const labels = (n.labels?.nodes || []).map((l) => l.name).join(", ");
+					return `${n.identifier} ${n.title} [${n.state?.name ?? ""}] P:${n.priority ?? ""} Proy:${n.project?.name ?? ""} Labels:${labels}`;
+				},
 			);
 			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
 		},
