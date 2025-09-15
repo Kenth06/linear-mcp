@@ -5,6 +5,7 @@ import { linearFetch, GQL, resolveTeamIdFromKey } from "./linear";
 export default function register(server: McpServer, env: Env) {
 	server.tool(
 		"linearCreateIssue",
+		"Create a Linear issue. Supports project/labels by name, optional assignee and due date.",
 		{
 			teamKey: z.string(),
 			title: z.string(),
@@ -51,10 +52,9 @@ export default function register(server: McpServer, env: Env) {
 				const pd = await linearFetch<{
 					projects: { nodes: Array<{ id: string; name: string }> };
 				}>(env, GQL.projectsByTeam, { teamId });
+				const needle = (input.projectName ?? "").trim().toLowerCase();
 				const proj = pd.projects.nodes.find(
-					(p) =>
-						p.name.trim().toLowerCase() ===
-						input.projectName!.trim().toLowerCase(),
+					(p) => p.name.trim().toLowerCase() === needle,
 				);
 				if (!proj)
 					throw new Error(

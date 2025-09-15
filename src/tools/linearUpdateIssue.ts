@@ -7,29 +7,28 @@ function isUuidLike(value: string): boolean {
 	return /^[0-9a-fA-F-]{36}$/.test(value);
 }
 
+const updateIssueArgsSchema = {
+	idOrKey: z.string(),
+	title: z.string().optional(),
+	description: z.string().optional(),
+	stateId: z.string().optional(),
+	state: z.string().optional().describe("Human-friendly status name or type"),
+	assigneeEmail: z.string().email().optional(),
+	dueDate: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/)
+		.optional(),
+	projectId: z.string().optional(),
+	projectName: z.string().optional(),
+	labelIds: z.array(z.string()).optional(),
+	labelNames: z.array(z.string()).optional(),
+} satisfies z.ZodRawShape;
+
 export default function register(server: McpServer, env: Env) {
 	server.tool(
 		"linearUpdateIssue",
-		{
-			idOrKey: z.string(),
-			title: z.string().optional(),
-			description: z.string().optional(),
-			stateId: z.string().optional(),
-			state: z
-				.string()
-				.optional()
-				.describe("Human-friendly status name or type"),
-			assigneeEmail: z.string().email().optional(),
-			dueDate: z
-				.string()
-				.regex(/^\d{4}-\d{2}-\d{2}$/)
-				.optional(),
-			projectId: z.string().optional(),
-			projectName: z.string().optional(),
-			priority: z.number().int().min(0).max(4).optional(),
-			labelIds: z.array(z.string()).optional(),
-			labelNames: z.array(z.string()).optional(),
-		},
+		"Update a Linear issue: title, description, state (alias), assignee, due date, project and labels by name or ID.",
+		updateIssueArgsSchema,
 		async (input) => {
 			const issueId = await resolveIssueId(env, input.idOrKey);
 			let assigneeId: string | undefined;
@@ -49,9 +48,9 @@ export default function register(server: McpServer, env: Env) {
 			if (input.description) update.description = input.description;
 			if (assigneeId) update.assigneeId = assigneeId;
 			if (input.dueDate) update.dueDate = input.dueDate;
-			if (input.projectId) update.projectId = input.projectId;
-			if (typeof input.priority === "number") update.priority = input.priority;
-			if (input.labelIds) update.labelIds = input.labelIds;
+
+			// We may need the issue's team for resolving aliases/names
+			let teamId: string | undefined;
 
 			// Resolve state: prefer explicit stateId if it is a UUID; otherwise map via name/type
 			let desiredAlias: string | undefined = input.state;
@@ -60,29 +59,13 @@ export default function register(server: McpServer, env: Env) {
 			if (input.stateId && isUuidLike(input.stateId))
 				update.stateId = input.stateId;
 
-			let teamIdForResolution: string | undefined;
-			const needTeamForState = !update.stateId && !!desiredAlias;
-			const needTeamForProject = !!input.projectName && !input.projectId;
-			const needTeamForLabels = !!(
-				input.labelNames &&
-				(!input.labelIds || input.labelIds.length === 0)
-			);
-			if (needTeamForState || needTeamForProject || needTeamForLabels) {
-				const issueData = await linearFetch<{
-					issue?: { team?: { id?: string } };
-				}>(env, GQL.issueById, { id: issueId });
-				teamIdForResolution = issueData.issue?.team?.id;
-				if (!teamIdForResolution)
-					throw new Error("No se pudo determinar el team del issue");
-			}
-
 			if (!update.stateId && desiredAlias) {
 				const issueData = await linearFetch<{
-					issue?: { team?: { id?: string } };
+					issue?: { team?: { id: string } };
 				}>(env, GQL.issueById, {
 					id: issueId,
 				});
-				const teamId: string | undefined = issueData.issue?.team?.id;
+				teamId = issueData.issue?.team?.id;
 				if (!teamId) throw new Error("No se pudo determinar el team del issue");
 				const statesData = await linearFetch<{
 					workflowStates: {
@@ -91,7 +74,8 @@ export default function register(server: McpServer, env: Env) {
 				}>(env, GQL.teamWorkflowStates, {
 					teamId,
 				});
-				const nodes = statesData.workflowStates.nodes;
+				const nodes: Array<{ id: string; name: string; type?: string }> =
+					statesData.workflowStates.nodes;
 				const wanted = desiredAlias.trim().toLowerCase();
 				const byName = nodes.find(
 					(s) => s.name.trim().toLowerCase() === wanted,
@@ -104,35 +88,59 @@ export default function register(server: McpServer, env: Env) {
 				update.stateId = stateId;
 			}
 
-			// Resolve projectName -> projectId
+			if (input.projectId) {
+				// Project resolution: projectId direct or projectName via team
+				update.projectId = input.projectId;
+			} else if (input.projectName) {
+				if (!teamId) {
+					const issueData = await linearFetch<{
+						issue?: { team?: { id: string } };
+					}>(env, GQL.issueById, { id: issueId });
+					teamId = issueData.issue?.team?.id;
+					if (!teamId)
+						throw new Error("No se pudo determinar el team del issue");
+				}
 				const pd = await linearFetch<{
 					projects: { nodes: Array<{ id: string; name: string }> };
-				}>(env, GQL.projectsByTeam, { teamId: teamIdForResolution! });
+				}>(env, GQL.projectsByTeam, { teamId });
+				const needle = input.projectName.trim().toLowerCase();
 				const proj = pd.projects.nodes.find(
-					(p) =>
-						p.name.trim().toLowerCase() ===
-						input.projectName!.trim().toLowerCase(),
+					(p) => p.name.trim().toLowerCase() === needle,
 				);
 				if (!proj)
-					throw new Error(`Proyecto no encontrado: ${input.projectName}`);
+					throw new Error(`Proyecto no encontrado por nombre: ${input.projectName}`);
 				update.projectId = proj.id;
 			}
 
-			if (!input.labelIds && input.labelNames && input.labelNames.length > 0) {
-				// Resolve labelNames -> labelIds
-				const ld = await linearFetch<{
-					issueLabels: { nodes: Array<{ id: string; name: string }> };
-				}>(env, GQL.issueLabelsByTeam, { teamId: teamIdForResolution! });
-				const mapByName = new Map(
-					ld.issueLabels.nodes.map(
-						(l) => [l.name.trim().toLowerCase(), l.id] as const,
-					),
-				);
-				update.labelIds = input.labelNames.map((n) => {
-					const id = mapByName.get(n.trim().toLowerCase());
-					if (!id) throw new Error(`Label no encontrado: ${n}`);
-					return id;
-				});
+			if (input.labelIds !== undefined) {
+				// Labels resolution: labelIds direct or labelNames via team
+				update.labelIds = input.labelIds;
+			} else if (input.labelNames !== undefined) {
+				if (input.labelNames.length === 0) {
+					update.labelIds = [];
+				} else {
+					if (!teamId) {
+						const issueData = await linearFetch<{
+							issue?: { team?: { id: string } };
+						}>(env, GQL.issueById, { id: issueId });
+						teamId = issueData.issue?.team?.id;
+						if (!teamId)
+							throw new Error("No se pudo determinar el team del issue");
+					}
+					const ld = await linearFetch<{
+						issueLabels: { nodes: Array<{ id: string; name: string }> };
+					}>(env, GQL.issueLabelsByTeam, { teamId });
+					const mapByName = new Map(
+						ld.issueLabels.nodes.map(
+							(l) => [l.name.trim().toLowerCase(), l.id] as const,
+						),
+					);
+					update.labelIds = input.labelNames.map((n) => {
+						const id = mapByName.get(n.trim().toLowerCase());
+						if (!id) throw new Error(`Label no encontrado: ${n}`);
+						return id;
+					});
+				}
 			}
 
 			const r = await linearFetch<{
@@ -153,5 +161,3 @@ export default function register(server: McpServer, env: Env) {
 		},
 	);
 }
-
-

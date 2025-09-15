@@ -106,6 +106,10 @@ export const GQL = {
 		query {
 			users { nodes { id name email } }
 		}`,
+	projectsByTeam: `
+		query ($teamId: ID) {
+			projects(filter: { team: { id: { eq: $teamId } } }) { nodes { id name } }
+		}`,
 };
 
 export function isUuidLike(value: string): boolean {

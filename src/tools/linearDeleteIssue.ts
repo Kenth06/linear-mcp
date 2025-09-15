@@ -5,6 +5,7 @@ import { linearFetch, GQL, resolveIssueId } from "./linear";
 export default function register(server: McpServer, env: Env) {
 	server.tool(
 		"linearDeleteIssue",
+		"Delete a Linear issue by id or key (e.g., ENG-123).",
 		{ idOrKey: z.string() },
 		async (input) => {
 			const id = await resolveIssueId(env, input.idOrKey);
