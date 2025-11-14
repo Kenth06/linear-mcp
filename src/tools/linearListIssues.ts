@@ -15,34 +15,49 @@ export default function register(server: McpServer, env: Env) {
 		{
 			teamKey: z.string().optional(),
 			assigneeEmail: z.string().email().optional(),
-			createdOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-			updatedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-			createdAfter: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-			createdBefore: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-			updatedAfter: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-			updatedBefore: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+			createdOn: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
+			updatedOn: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
+			createdAfter: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
+			createdBefore: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
+			updatedAfter: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
+			updatedBefore: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
 		},
 		async (input) => {
 			let teamId: string | undefined;
 			if (input.teamKey) {
-				const td = await linearFetch<{ teams: { nodes: Array<{ id: string }> } }>(
-					env,
-					GQL.teamByKey,
-					{ key: input.teamKey },
-				);
+				const td = await linearFetch<{
+					teams: { nodes: Array<{ id: string }> };
+				}>(env, GQL.teamByKey, { key: input.teamKey });
 				teamId = td.teams.nodes[0]?.id;
 				if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
 			}
 
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
-				const ud = await linearFetch<{ users: { nodes: Array<{ id: string }> } }>(
-					env,
-					GQL.userByEmail,
-					{ email: input.assigneeEmail },
-				);
+				const ud = await linearFetch<{
+					users: { nodes: Array<{ id: string }> };
+				}>(env, GQL.userByEmail, { email: input.assigneeEmail });
 				assigneeId = ud.users.nodes[0]?.id;
-				if (!assigneeId) throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
+				if (!assigneeId)
+					throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
 			}
 
 			let createdAfter = input.createdAfter;
@@ -61,7 +76,8 @@ export default function register(server: McpServer, env: Env) {
 			}
 
 			const toDateTime = (s?: string) => (s ? `${s}T00:00:00.000Z` : undefined);
-			const toDateTimeEnd = (s?: string) => (s ? `${s}T23:59:59.999Z` : undefined);
+			const toDateTimeEnd = (s?: string) =>
+				s ? `${s}T23:59:59.999Z` : undefined;
 
 			const data = await linearFetch<{
 				issues: {
@@ -83,7 +99,9 @@ export default function register(server: McpServer, env: Env) {
 			const items = (data.issues?.nodes || []).map(
 				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
 			);
-			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
+			return {
+				content: [{ type: "text", text: items.join("\n") || "Sin resultados" }],
+			};
 		},
 	);
 
@@ -96,24 +114,21 @@ export default function register(server: McpServer, env: Env) {
 		async (input) => {
 			let teamId: string | undefined;
 			if (input.teamKey) {
-				const td = await linearFetch<{ teams: { nodes: Array<{ id: string }> } }>(
-					env,
-					GQL.teamByKey,
-					{ key: input.teamKey },
-				);
+				const td = await linearFetch<{
+					teams: { nodes: Array<{ id: string }> };
+				}>(env, GQL.teamByKey, { key: input.teamKey });
 				teamId = td.teams.nodes[0]?.id;
 				if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
 			}
 
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
-				const ud = await linearFetch<{ users: { nodes: Array<{ id: string }> } }>(
-					env,
-					GQL.userByEmail,
-					{ email: input.assigneeEmail },
-				);
+				const ud = await linearFetch<{
+					users: { nodes: Array<{ id: string }> };
+				}>(env, GQL.userByEmail, { email: input.assigneeEmail });
 				assigneeId = ud.users.nodes[0]?.id;
-				if (!assigneeId) throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
+				if (!assigneeId)
+					throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
 			}
 
 			const today = isoDate(new Date());
@@ -136,9 +151,9 @@ export default function register(server: McpServer, env: Env) {
 			const items = (data.issues?.nodes || []).map(
 				(n) => `${n.identifier} ${n.title} [${n.state?.name ?? ""}]`,
 			);
-			return { content: [{ type: "text", text: items.join("\n") || "Sin resultados" }] };
+			return {
+				content: [{ type: "text", text: items.join("\n") || "Sin resultados" }],
+			};
 		},
 	);
 }
-
-

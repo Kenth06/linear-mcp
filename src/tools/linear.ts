@@ -22,54 +22,131 @@ export async function linearFetch<T = unknown>(
 
 export const GQL = {
 	teamByKey: `
-		query ($key: String!) { teams(filter: { key: { eq: $key } }) { nodes { id key name } } }`,
+		query ($key: String!) {
+			teams(filter: { key: { eq: $key } }) {
+				nodes { id key name }
+			}
+		}`,
 	userByEmail: `
-		query ($email: String!) { users(filter: { email: { eq: $email } }) { nodes { id name email } } }`,
+		query ($email: String!) {
+			users(filter: { email: { eq: $email } }) {
+				nodes { id name email }
+			}
+		}`,
 	issueById: `
-		query ($id: String!) { issue(id: $id) { id team { id } } }`,
+		query ($id: String!) {
+			issue(id: $id) {
+				id
+				team { id }
+			}
+		}`,
 	issueIdByTeamAndNumber: `
 		query ($teamId: ID!, $number: Float!) {
-			issues(
-				filter: { team: { id: { eq: $teamId } }, number: { eq: $number } }
-			) { nodes { id } }
+			issues(filter: {
+				team: { id: { eq: $teamId } }
+				number: { eq: $number }
+			}) {
+				nodes { id }
+			}
 		}`,
 	teamWorkflowStates: `
-		query ($teamId: ID!) { workflowStates(filter: { team: { id: { eq: $teamId } } }) { nodes { id name type } } }`,
+		query ($teamId: ID!) {
+			workflowStates(filter: { team: { id: { eq: $teamId } } }) {
+				nodes { id name type }
+			}
+		}`,
 	issuesByFilter: `
 		query (
-			$teamId: ID, $assigneeId: ID,
-			$updatedAfter: DateTimeOrDuration, $updatedBefore: DateTimeOrDuration,
-			$createdAfter: DateTimeOrDuration, $createdBefore: DateTimeOrDuration
+			$teamId: ID
+			$assigneeId: ID
+			$updatedAfter: DateTimeOrDuration
+			$updatedBefore: DateTimeOrDuration
+			$createdAfter: DateTimeOrDuration
+			$createdBefore: DateTimeOrDuration
 		) {
-			issues(
-				filter: {
-					team: { id: { eq: $teamId } }
-					assignee: { id: { eq: $assigneeId } }
-					updatedAt: { gte: $updatedAfter, lte: $updatedBefore }
-					createdAt: { gte: $createdAfter, lte: $createdBefore }
+			issues(filter: {
+				team: { id: { eq: $teamId } }
+				assignee: { id: { eq: $assigneeId } }
+				updatedAt: { gte: $updatedAfter, lte: $updatedBefore }
+				createdAt: { gte: $createdAfter, lte: $createdBefore }
+			}) {
+				nodes {
+					id
+					identifier
+					title
+					state { id name }
+					assignee { id name }
+					createdAt
+					updatedAt
 				}
-			) { nodes { id identifier title state { id name } assignee { id name } createdAt updatedAt } }
+			}
 		}`,
 	issueByIdentifier: `
-		query ($id: String!) { issue(id: $id) { id identifier title description state { id name } assignee { id name email } team { id key name } createdAt updatedAt } }`,
+		query ($id: String!) {
+			issue(id: $id) {
+				id
+				identifier
+				title
+				description
+				state { id name }
+				assignee { id name email }
+				team { id key name }
+				createdAt
+				updatedAt
+			}
+		}`,
 	issueCreate: `
 		mutation ($input: IssueCreateInput!) {
-			issueCreate(input: $input) { success issue { id identifier title } }
+			issueCreate(input: $input) {
+				success
+				issue { id identifier title }
+			}
 		}`,
 	issueUpdate: `
 		mutation ($id: String!, $input: IssueUpdateInput!) {
-			issueUpdate(id: $id, input: $input) { success issue { id identifier title } }
+			issueUpdate(id: $id, input: $input) {
+				success
+				issue { id identifier title }
+			}
 		}`,
-	issueDelete: `mutation ($id: String!) { issueDelete(id: $id) { success } }`,
+	issueDelete: `
+		mutation ($id: String!) {
+			issueDelete(id: $id) {
+				success
+			}
+		}`,
 	commentCreate: `
-		mutation ($input: CommentCreateInput!) { commentCreate(input: $input) { success comment { id } } }`,
+		mutation ($input: CommentCreateInput!) {
+			commentCreate(input: $input) {
+				success
+				comment { id }
+			}
+		}`,
 	webhookCreate: `
 		mutation ($input: WebhookCreateInput!) {
-			webhookCreate(input: $input) { success webhook { id enabled url } }
+			webhookCreate(input: $input) {
+				success
+				webhook { id enabled url }
+			}
 		}`,
-	webhookDelete: `mutation ($id: String!) { webhookDelete(id: $id) { success } }`,
-	teamIdByKey: `query ($key: String!) { teams(filter: { key: { eq: $key } }) { nodes { id } } }`,
-	teamsList: `query { teams(first: 50) { nodes { id key name } } }`,
+	webhookDelete: `
+		mutation ($id: String!) {
+			webhookDelete(id: $id) {
+				success
+			}
+		}`,
+	teamIdByKey: `
+		query ($key: String!) {
+			teams(filter: { key: { eq: $key } }) {
+				nodes { id }
+			}
+		}`,
+	teamsList: `
+		query {
+			teams(first: 50) {
+				nodes { id key name }
+			}
+		}`,
 };
 
 export function isUuidLike(value: string): boolean {
@@ -129,5 +206,3 @@ export async function resolveIssueId(
 	if (!d.issue?.id) throw new Error(`Issue no encontrado: ${idOrKey}`);
 	return d.issue.id as string;
 }
-
-

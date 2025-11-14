@@ -14,9 +14,14 @@ export default function register(server: McpServer, env: Env) {
 			const r = await linearFetch(env, GQL.commentCreate, {
 				input: { issueId, body: input.body },
 			});
-			return { content: [{ type: "text", text: `Comentario ${r.commentCreate?.comment?.id ?? "ok"}` }] };
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Comentario ${r.commentCreate?.comment?.id ?? "ok"}`,
+					},
+				],
+			};
 		},
 	);
 }
-
-

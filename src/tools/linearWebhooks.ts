@@ -9,13 +9,17 @@ export default function register(server: McpServer, env: Env) {
 			url: z.string().url().describe("Ej: https://<tu-worker>/webhooks/linear"),
 			teamKey: z.string().optional(),
 			allPublicTeams: z.boolean().optional().default(false),
-			resourceTypes: z.array(z.string()).default(["Issue", "Comment", "Project"]),
+			resourceTypes: z
+				.array(z.string())
+				.default(["Issue", "Comment", "Project"]),
 			enabled: z.boolean().optional().default(true),
 		},
 		async (input) => {
 			let teamId: string | undefined;
 			if (input.teamKey && !input.allPublicTeams) {
-				const td = await linearFetch(env, GQL.teamIdByKey, { key: input.teamKey });
+				const td = await linearFetch(env, GQL.teamIdByKey, {
+					key: input.teamKey,
+				});
 				teamId = td.teams.nodes[0]?.id;
 				if (!teamId) throw new Error(`Team no encontrado: ${input.teamKey}`);
 			}
@@ -29,18 +33,16 @@ export default function register(server: McpServer, env: Env) {
 				},
 			});
 			const w = r.webhookCreate.webhook;
-			return { content: [{ type: "text", text: `Webhook id=${w.id} enabled=${w.enabled}` }] };
+			return {
+				content: [
+					{ type: "text", text: `Webhook id=${w.id} enabled=${w.enabled}` },
+				],
+			};
 		},
 	);
 
-	server.tool(
-		"linearWebhookDelete",
-		{ id: z.string() },
-		async (input) => {
-			await linearFetch(env, GQL.webhookDelete, { id: input.id });
-			return { content: [{ type: "text", text: "Webhook eliminado" }] };
-		},
-	);
+	server.tool("linearWebhookDelete", { id: z.string() }, async (input) => {
+		await linearFetch(env, GQL.webhookDelete, { id: input.id });
+		return { content: [{ type: "text", text: "Webhook eliminado" }] };
+	});
 }
-
-

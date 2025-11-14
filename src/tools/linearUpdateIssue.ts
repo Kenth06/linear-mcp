@@ -15,17 +15,26 @@ export default function register(server: McpServer, env: Env) {
 			title: z.string().optional(),
 			description: z.string().optional(),
 			stateId: z.string().optional(),
-			state: z.string().optional().describe("Human-friendly status name or type"),
+			state: z
+				.string()
+				.optional()
+				.describe("Human-friendly status name or type"),
 			assigneeEmail: z.string().email().optional(),
-			dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+			dueDate: z
+				.string()
+				.regex(/^\d{4}-\d{2}-\d{2}$/)
+				.optional(),
 		},
 		async (input) => {
 			const issueId = await resolveIssueId(env, input.idOrKey);
 			let assigneeId: string | undefined;
 			if (input.assigneeEmail) {
-				const ud = await linearFetch(env, GQL.userByEmail, { email: input.assigneeEmail });
+				const ud = await linearFetch(env, GQL.userByEmail, {
+					email: input.assigneeEmail,
+				});
 				assigneeId = ud.users.nodes[0]?.id;
-				if (!assigneeId) throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
+				if (!assigneeId)
+					throw new Error(`Usuario no encontrado: ${input.assigneeEmail}`);
 			}
 
 			const update: Record<string, unknown> = {};
@@ -36,18 +45,29 @@ export default function register(server: McpServer, env: Env) {
 
 			// Resolve state: prefer explicit stateId if it is a UUID; otherwise map via name/type
 			let desiredAlias: string | undefined = input.state;
-			if (input.stateId && !isUuidLike(input.stateId)) desiredAlias = input.stateId;
-			if (input.stateId && isUuidLike(input.stateId)) update.stateId = input.stateId;
+			if (input.stateId && !isUuidLike(input.stateId))
+				desiredAlias = input.stateId;
+			if (input.stateId && isUuidLike(input.stateId))
+				update.stateId = input.stateId;
 
 			if (!update.stateId && desiredAlias) {
-				const issueData = await linearFetch(env, GQL.issueById, { id: issueId });
+				const issueData = await linearFetch(env, GQL.issueById, {
+					id: issueId,
+				});
 				const teamId: string | undefined = issueData.issue?.team?.id;
 				if (!teamId) throw new Error("No se pudo determinar el team del issue");
-				const statesData = await linearFetch(env, GQL.teamWorkflowStates, { teamId });
-				const nodes: Array<{ id: string; name: string; type?: string }> = statesData.workflowStates.nodes;
+				const statesData = await linearFetch(env, GQL.teamWorkflowStates, {
+					teamId,
+				});
+				const nodes: Array<{ id: string; name: string; type?: string }> =
+					statesData.workflowStates.nodes;
 				const wanted = desiredAlias.trim().toLowerCase();
-				const byName = nodes.find((s) => s.name.trim().toLowerCase() === wanted);
-				const byType = nodes.find((s) => (s.type || "").trim().toLowerCase() === wanted);
+				const byName = nodes.find(
+					(s) => s.name.trim().toLowerCase() === wanted,
+				);
+				const byType = nodes.find(
+					(s) => (s.type || "").trim().toLowerCase() === wanted,
+				);
 				const stateId = (byName || byType)?.id;
 				if (!stateId) throw new Error(`Estado no encontrado: ${desiredAlias}`);
 				update.stateId = stateId;
@@ -58,9 +78,14 @@ export default function register(server: McpServer, env: Env) {
 				input: update,
 			});
 			const issue = r.issueUpdate.issue;
-			return { content: [{ type: "text", text: `Actualizado ${issue.identifier}: ${issue.title}` }] };
+			return {
+				content: [
+					{
+						type: "text",
+						text: `Actualizado ${issue.identifier}: ${issue.title}`,
+					},
+				],
+			};
 		},
 	);
 }
-
-
