@@ -20,5 +20,3 @@ export function registerTools(server: McpServer, env: Env): void {
 	registerListTeams(server, env);
 	registerListStates(server, env);
 }
-
-

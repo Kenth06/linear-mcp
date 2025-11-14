@@ -79,13 +79,13 @@ app.mount("/mcp", LinearMCP.serve("/mcp").fetch, { replaceRequest: false });
 export default app;
 
 declare global {
-		interface Env {
-			MCP_SERVER_NAME: string;
-			LINEAR_GRAPHQL_URL: string;
-			LINEAR_API_KEY: string;
-			LINEAR_WEBHOOK_SECRET?: string;
-			FORWARD_URL?: string;
-			FORWARD_SIGNING_SECRET?: string;
-			MCP_OBJECT?: DurableObjectNamespace<LinearMCP>;
-		}
+	interface Env {
+		MCP_SERVER_NAME: string;
+		LINEAR_GRAPHQL_URL: string;
+		LINEAR_API_KEY: string;
+		LINEAR_WEBHOOK_SECRET?: string;
+		FORWARD_URL?: string;
+		FORWARD_SIGNING_SECRET?: string;
+		MCP_OBJECT?: DurableObjectNamespace<LinearMCP>;
 	}
+}
